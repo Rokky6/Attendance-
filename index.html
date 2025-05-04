@@ -1,0 +1,1797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance and Expense Tracker</title>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f4f4f4;
+            color: #333; /* Default text color */
+        }
+
+        .container {
+            display: flex;
+            align-items: center; /* Center vertically */
+            margin-bottom: 10px;
+            flex-wrap: wrap; /* Allow flex items to wrap */
+            gap: 5px; /* Add gap between items in container */
+        }
+
+        /* Style for input fields */
+        input {
+            padding: 6px;
+            margin: 5px 0; /* Adjust margin - top/bottom 5px, left/right 0 */
+            font-size: 14px;
+            border: 1px solid #ccc; /* Default border */
+            box-sizing: border-box;
+        }
+         /* Remove border and background for inputs inside table cells */
+         td input {
+             border: none;
+             background: none;
+             padding: 0; /* Remove padding from input */
+             margin: 0; /* Remove margin from input */
+             text-align: center; /* Center text inside input */
+             display: block; /* Make input fill td */
+             width: 100%; /* Make input fill td width */
+             height: 100%; /* Make input fill td height */
+             box-sizing: border-box; /* Include padding/border in element's total width and height */
+             /* Allow placeholder text color change */
+             color: inherit; /* Inherit color from parent td */
+         }
+          /* Style for input placeholders */
+         td input::placeholder {
+             color: #bbb; /* Lighter color for placeholders */
+             opacity: 1; /* Show placeholder in Firefox */
+         }
+
+        /* Style for DISABLED input fields */
+        td input:disabled {
+            background-color: #e9e9e9; /* Light grey background for disabled */
+            cursor: not-allowed; /* Indicate not editable */
+            color: #555; /* Slightly faded text color */
+        }
+
+
+        button {
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 6px 10px;
+            margin: 5px;
+            font-size: 16px;
+            min-width: 35px;
+            text-align: center;
+            display: inline-block; /* Ensure button fits content */
+        }
+         #addUserBtn {
+             width: 35px; /* Keep specific width for add button */
+             font-size: 18px;
+         }
+
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+         /* Wrapper for responsive table scrolling */
+         .table-responsive {
+             overflow-x: auto; /* Enable horizontal scrolling */
+             -webkit-overflow-scrolling: touch; /* Improve scrolling performance on touch devices */
+             /* Removed margin-top as it's on parent or handled by spacing */
+         }
+
+        table {
+            width: 100%; /* Table takes full width of its container (the responsive wrapper) */
+            border-collapse: collapse;
+            background: white;
+            table-layout: fixed; /* Helps control column widths */
+             /* Removed margin-top as it's on .table-responsive now */
+        }
+
+         /* Adjust column widths using th/td */
+         th, td {
+            border: 1px solid #aaa;
+            padding: 4px; /* Slightly reduced padding for all cells */
+            text-align: center;
+            word-wrap: break-word; /* Break long words */
+             vertical-align: top; /* Align content to top if cell height varies */
+         }
+
+         /* Reduce vertical padding and line height specifically for table headers */
+         th {
+            background-color: #ddd;
+            font-weight: bold;
+            border-bottom: 1px solid #aaa;
+            padding: 1px 4px; /* Further reduced vertical padding for header cells */
+             line-height: 1.0; /* Reduce space between lines if header text wraps */
+         }
+
+
+         /* Specific widths for TD cells based on user request */
+         th:nth-child(1), td:nth-child(1) { width: 90px; } /* Date TD - Increased width */
+         th:nth-child(2), td:nth-child(2) { width: 25px; } /* Status TD */
+         th:nth-child(3), td:nth-child(3) { width: 25px; } /* Overtime TD - Updated */
+         th:nth-child(4), td:nth-child(4) { width: 30px; } /* Rent TD - Updated */
+         th:nth-child(5), td:nth-child(5) { width: 30px; } /* Food TD - Updated */
+         th:nth-child(6), td:nth-child(6) { width: 30px; } /* Received TD - Updated */
+         th:nth-child(7), td:nth-child(7) { width: auto; min-width: 100px; } /* Notes TD - Takes remaining space */
+         th:nth-child(8), td:nth-child(8) { width: auto; min-width: 80px; } /* Location TD - Takes remaining space */
+         th:nth-child(9), td:nth-child(9) { width: 90px; } /* Edited TD - Updated */
+
+
+         /* Style for the area where user buttons are */
+         #userTabs {
+             margin-top: 10px;
+             margin-bottom: 20px; /* Space below the user buttons */
+             padding: 10px;
+             background-color: #e9e9e9;
+             border-radius: 5px;
+             display: flex; /* Make buttons flow nicely */
+             flex-wrap: wrap; /* Allow buttons to wrap */
+             gap: 5px; /* Space between buttons */
+         }
+          /* Style for user buttons inside userTabs */
+         #userTabs button {
+             margin: 0; /* Remove margin from button itself, rely on gap */
+         }
+         /* Style for active user tab button */
+         .user-tab-button.active-user-tab {
+             background-color: #007bff; /* Blue color for active tab */
+             color: white;
+         }
+         .user-tab-button.active-user-tab:hover {
+              background-color: #0056b3;
+         }
+
+
+         /* Style for the user control section (rate, report buttons, month nav) */
+         #userControl {
+             margin-top: 20px;
+             padding: 10px;
+             background-color: #e9e9e9;
+             border-radius: 5px;
+         }
+          #userControl div {
+              margin-bottom: 10px;
+              /* Added for month navigation alignment */
+              display: flex;
+              align-items: center;
+              gap: 10px;
+          }
+          #userControl label { /* Style for labels */
+               margin-right: 5px; /* Space between label and input */
+               min-width: 100px; /* Ensure labels have some width */
+          }
+          #userControl input[type="number"] { /* Style specifically for number inputs in control */
+              flex-grow: 0; /* Don't let them grow */
+          }
+
+          #userControl button {
+              margin-right: 5px; /* Add margin between report buttons */
+          }
+          /* Style for month navigation buttons */
+          #monthNav button {
+             padding: 4px 8px; /* Smaller padding */
+             font-size: 14px;
+             margin: 0; /* Remove default button margin */
+          }
+          /* Style for month display span */
+          #currentMonthDisplay {
+              font-size: 1.1em;
+              font-weight: bold;
+              min-width: 120px; /* Ensure consistent width */
+              text-align: center;
+          }
+
+         /* Style for the Previous Balance Payments Section */
+         #previousBalancePaymentsSection {
+             margin-top: 20px;
+             padding: 10px;
+             background-color: #fff;
+             border: 1px solid #ddd;
+             border-radius: 5px;
+         }
+         #previousBalancePaymentsSection h3 {
+             margin-top: 0;
+             color: #333;
+             border-bottom: 1px solid #eee;
+             padding-bottom: 5px;
+             margin-bottom: 10px;
+         }
+         #previousBalancePaymentsSection .payment-entry {
+             border-bottom: 1px dashed #eee;
+             padding: 5px 0;
+             margin-bottom: 5px;
+             display: flex;
+             justify-content: space-between;
+             align-items: center;
+              font-size: 0.9em;
+         }
+          #previousBalancePaymentsSection .payment-entry:last-child {
+              border-bottom: none; /* No border on last item */
+          }
+          #previousBalancePaymentsSection .payment-details {
+               flex-grow: 1; /* Allow details to take space */
+          }
+          #previousBalancePaymentsSection .delete-payment-btn {
+              background-color: #dc3545;
+              color: white;
+              border: none;
+              border-radius: 3px;
+              padding: 2px 5px;
+              font-size: 0.8em;
+              cursor: pointer;
+              margin-left: 10px; /* Space between details and button */
+          }
+           #previousBalancePaymentsSection .delete-payment-btn:hover {
+               background-color: #c82333;
+           }
+
+         #addPaymentForm {
+             display: flex;
+             gap: 10px;
+             margin-top: 15px;
+             padding-top: 10px;
+             border-top: 1px solid #eee;
+             flex-wrap: wrap;
+             align-items: center;
+         }
+          #addPaymentForm input[type="number"],
+          #addPaymentForm input[type="date"],
+          #addPaymentForm input[type="text"] {
+              padding: 4px;
+              font-size: 1em;
+              margin: 0; /* Remove default margin */
+              flex-grow: 1; /* Allow inputs to grow */
+              min-width: 80px; /* Minimum width for inputs */
+          }
+           #addPaymentForm input[type="text"] {
+                min-width: 120px; /* Wider minimum for notes */
+           }
+           #addPaymentForm label {
+               margin: 0;
+                font-size: 0.9em;
+                white-space: nowrap; /* Prevent label wrapping */
+           }
+           #addPaymentForm button {
+               margin: 0;
+               padding: 5px 10px;
+               font-size: 1em;
+               background-color: #007bff;
+           }
+           #addPaymentForm button:hover {
+               background-color: #0056b3;
+           }
+
+
+         /* Style for the summary section */
+         #summarySection {
+             margin-top:20px; /* Add margin-top to separate summary from table area */
+             padding: 10px;
+             background-color: #fff;
+             border: 1px solid #ddd;
+             border-radius: 5px;
+         }
+         #summarySection h3 {
+             margin-top: 0;
+             color: #333;
+         }
+         #summarySection p {
+             margin: 5px 0;
+         }
+         #summarySection strong {
+             display: block;
+             margin-top: 10px;
+             font-size: 1.1em;
+             color: #000;
+         }
+
+         /* Style for the area to be screenshotted */
+         #reportArea {
+             /* This wrapper helps html2canvas capture both parts */
+             margin-top: 20px; /* Add margin to the whole report block */
+             background-color: #fff; /* Add white background to capture area */
+             padding: 10px; /* Add some padding */
+             padding-bottom: 30px; /* Added padding at the bottom for footer space */
+             border: 1px solid #ddd; /* Add border */
+             border-radius: 5px; /* Add rounded corners */
+             position: relative; /* Needed for potential absolute positioning of footer if needed, though not used here */
+         }
+          #reportArea #tableContainer {
+              margin-top: 0; /* Remove redundant margin */
+          }
+
+        /* Style for the report footer */
+        #reportFooter {
+            text-align: center;
+            width: 100%; /* Ensure footer spans width */
+            box-sizing: border-box; /* Include padding/border in width */
+            margin-top: 15px; /* Space above footer if flow positioned */
+            padding-top: 10px; /* Space inside footer above text */
+            border-top: 1px solid #ddd; /* Separator line */
+            font-size: 0.8em; /* Smaller text */
+            color: #555; /* Greyish color */
+            display: block;
+            visibility: visible; /* Ensure visibility */
+        }
+
+
+    </style>
+</head>
+<body>
+
+    <div id="addUserInputContainer" class="container">
+         <input type="text" id="newUserName" placeholder="Add New Name">
+         <button id="addUserBtn" onclick="addUser()">
+            <span style="font-size: 24px;">➕</span> </button>
+         <button id="hideUsersBtn" onclick="toggleUsers()">Hide/Show Names</button> </div>
+
+    <div id="userTabs">
+         </div>
+
+    <div id="userControl" style="display:none;">
+        <h2>For <span id="selectedUserName"></span></h2>
+        <div style="margin-bottom: 10px;">
+            <label for="userRate">Rate (Per Attendance):</label>
+            <input type="number" id="userRate" style="width: 60px; margin-right: 10px;">
+        </div>
+
+        <div id="monthNav">
+            <button onclick="goToPreviousMonth()">❮ Previous</button>
+            <span id="currentMonthDisplay"></span>
+            <button onclick="goToNextMonth()">Next ❯</button>
+        </div>
+         <div>
+             View Report:
+            <button onclick="showSummary('firstHalfCurrent')">First 15 Days</button>
+            <button onclick="showSummary('afterFifteenth')">After 15th</button>
+            <button onclick="showSummary('fullMonth')">Full Month</button>
+        </div>
+        <div style="margin-top: 10px;"> <button onclick="shareReport()">Share Report (Image)</button> </div>
+         </div>
+
+    <div id="reportArea">
+        <div id="tableContainer">
+            </div>
+
+         <div id="previousBalancePaymentsSection" style="display:none;">
+             <h3>Payments Received Towards Previous Balance</h3>
+             <div id="paymentList">
+                  </div>
+             <div id="addPaymentForm">
+                  <label for="paymentAmount">Amount:</label>
+                  <input type="number" id="paymentAmount" placeholder="Amount">
+                  <label for="paymentDate">Date:</label>
+                  <input type="date" id="paymentDate">
+                  <label for="paymentNotes">Notes:</label>
+                  <input type="text" id="paymentNotes" placeholder="Notes">
+                  <button onclick="addPreviousBalancePayment()">Add Payment</button>
+             </div>
+        </div>
+         <div id="summarySection">
+            </div>
+
+        <div id="reportFooter">
+            </div>
+    </div>
+
+
+    <script>
+        let data = {};
+        let currentUser = null;
+        let currentlyViewedMonth = null; // Format:YYYY-MM
+        let activeReportType = 'fullMonth'; // Keep track of the last generated report type
+
+
+        // Load data from localStorage
+        function loadData() {
+            const storedData = localStorage.getItem('attendanceData');
+            if (storedData) {
+                try {
+                     data = JSON.parse(storedData);
+                      if (typeof data !== 'object' || data === null) {
+                          console.error("Parsed data is not an object:", data);
+                          data = {};
+                     }
+
+                     // Migrate data structure and ensure fields exist
+                     for (const userName in data) {
+                         if (Object.prototype.hasOwnProperty.call(data, userName) && data[userName] && typeof data[userName] === 'object') {
+                             if (!data[userName].months) {
+                                 data[userName].months = {};
+                             }
+
+                             // Ensure rate exists
+                             if (data[userName].rate === undefined || data[userName].rate === null) {
+                                 data[userName].rate = 0;
+                             }
+
+                             for (const monthKey in data[userName].months) {
+                                  if (Object.prototype.hasOwnProperty.call(data[userName].months, monthKey)) {
+                                       let monthEntry = data[userName].months[monthKey];
+                                        let daysArray = null;
+                                        let carriedOverBalance = 0; // New field for auto-carried balance
+                                        let previousBalancePayments = []; // New field for tracking payments against carried balance
+
+
+                                        // --- Migration Logic from old formats ---
+                                        if (Array.isArray(monthEntry)) {
+                                            // Oldest format: monthEntry was just the days array
+                                            daysArray = monthEntry;
+                                            carriedOverBalance = 0; // No carry over in oldest format
+                                            previousBalancePayments = []; // No previous payments tracked
+                                             console.log(`Migrating month data for ${monthKey} for user ${userName} from oldest array format.`);
+                                        } else if (monthEntry && typeof monthEntry === 'object' && Object.prototype.hasOwnProperty.call(monthEntry, 'manualPreviousBalance')) {
+                                            // Previous format: { manualPreviousBalance, days }
+                                            carriedOverBalance = Number(monthEntry.manualPreviousBalance) || 0; // manualPreviousBalance becomes carriedOverBalance
+                                            daysArray = Array.isArray(monthEntry.days) ? monthEntry.days : [];
+                                            previousBalancePayments = []; // No previous payments tracked in this format
+                                             console.log(`Migrating month data for ${monthKey} for user ${userName} from manual balance format.`);
+                                        }
+                                         else if (monthEntry && typeof monthEntry === 'object' && Array.isArray(monthEntry.days)) {
+                                            // Current/New format: { carriedOverBalance, previousBalancePayments, days }
+                                            carriedOverBalance = Number(monthEntry.carriedOverBalance) || 0; // Ensure it's a number
+                                            previousBalancePayments = Array.isArray(monthEntry.previousBalancePayments) ? monthEntry.previousBalancePayments : []; // Ensure it's an array
+                                            daysArray = Array.isArray(monthEntry.days) ? monthEntry.days : []; // Ensure it's an array
+
+                                             // Ensure the new fields exist on the object if they were missing
+                                             if (!Object.prototype.hasOwnProperty.call(monthEntry, 'carriedOverBalance')) monthEntry.carriedOverBalance = carriedOverBalance;
+                                             if (!Object.prototype.hasOwnProperty.call(monthEntry, 'previousBalancePayments')) monthEntry.previousBalancePayments = previousBalancePayments;
+
+                                        } else {
+                                            console.error(`Skipping invalid month data format for ${monthKey} for user ${userName}:`, monthEntry);
+                                            delete data[userName].months[monthKey]; // Remove corrupted entry
+                                            continue; // Skip to next month
+                                        }
+                                        // --- End Migration Logic ---
+
+
+                                        const [year, monthIndex] = monthKey.split('-').map(Number);
+                                        if (isNaN(year) || year < 1900 || isNaN(monthIndex) || monthIndex < 1 || monthIndex > 12) {
+                                            console.warn(`Skipping invalid month key format "${monthKey}" or invalid date for user ${userName}.`);
+                                            delete data[userName].months[monthKey];
+                                            continue;
+                                        }
+
+                                        const actualDays = getDaysInMonth(year, monthIndex - 1);
+
+                                        // Ensure daysArray has correct length for this month
+                                        if (daysArray.length !== actualDays) {
+                                             console.warn(`Days data for ${monthKey} for user ${userName} has unexpected length (${daysArray.length} vs ${actualDays}). Adjusting array length.`);
+                                             const currentLength = daysArray.length;
+                                              if (currentLength < actualDays) {
+                                                  for(let i = currentLength; i < actualDays; i++) {
+                                                      const dayIndex = i + 1;
+                                                      daysArray.push({
+                                                         date: `${dayIndex}/${monthIndex}/${year}`,
+                                                         status: '', overtime: 0, rent: 0, food: 0, received: 0, location: "", notes: "", updated: ""
+                                                      });
+                                                  }
+                                              } else if (currentLength > actualDays) {
+                                                   daysArray.length = actualDays;
+                                              }
+                                        }
+
+                                        // Ensure all required fields exist for each day
+                                        daysArray.forEach((day, dayIdx) => { // Added dayIdx
+                                            if (day && typeof day === 'object') {
+                                                if (!Object.prototype.hasOwnProperty.call(day, 'date')) day.date = `${dayIdx + 1}/${monthIndex}/${year}`; // Use dayIdx + 1 for date
+                                                if (!Object.prototype.hasOwnProperty.call(day, 'status')) day.status = '';
+                                                if (!Object.prototype.hasOwnProperty.call(day, 'overtime')) day.overtime = 0;
+                                                if (!Object.prototype.hasOwnProperty.call(day, 'rent')) day.rent = 0;
+                                                if (!Object.prototype.hasOwnProperty.call(day, 'food')) day.food = 0;
+                                                if (!Object.prototype.hasOwnProperty.call(day, 'received')) day.received = 0; // Corrected check
+                                                if (!Object.prototype.hasOwnProperty.call(day, 'location')) day.location = "";
+                                                if (!Object.prototype.hasOwnProperty.call(day, 'notes')) day.notes = "";
+                                                if (!Object.prototype.hasOwnProperty.call(day, 'updated')) day.updated = "";
+                                            } else {
+                                                 console.warn(`Invalid day data found for ${monthKey} day ${dayIdx + 1} for user ${userName}. Replacing with default.`, day);
+                                                 daysArray[dayIdx] = { // Use dayIdx to replace
+                                                     date: `${dayIdx + 1}/${monthIndex}/${year}`,
+                                                     status: '', overtime: 0, rent: 0, food: 0, received: 0, location: "", notes: "", updated: ""
+                                                 };
+                                            }
+                                        });
+
+                                        // Ensure payment entries have required fields (basic check)
+                                         previousBalancePayments.forEach(payment => {
+                                              if(payment && typeof payment === 'object') {
+                                                   if (!Object.prototype.hasOwnProperty.call(payment, 'amount')) payment.amount = 0;
+                                                   if (!Object.prototype.hasOwnProperty.call(payment, 'date')) payment.date = '';
+                                                   if (!Object.prototype.hasOwnProperty.call(payment, 'notes')) payment.notes = '';
+                                              }
+                                         });
+
+
+                                         // Store in the new object format
+                                         data[userName].months[monthKey] = {
+                                              carriedOverBalance: carriedOverBalance,
+                                              previousBalancePayments: previousBalancePayments,
+                                              days: daysArray
+                                         };
+
+                                  }
+                             }
+                         } else {
+                             console.error(`Unexpected data format for user: ${userName}. Skipping.`, data[userName]);
+                         }
+                     }
+                     // saveData(); // No need to save here unless migration happens and you want to ensure it's saved immediately. Migration happens implicitly by restructuring the data in memory. A save will store the new structure.
+
+                } catch (e) {
+                     console.error("Error parsing or migrating data from localStorage:", e);
+                     alert("Problem loading or fixing old data. New data may be used.");
+                     data = {}; // Reset data if parsing or migration failed
+                }
+            }
+
+             renderUserTabs();
+             const lastUser = localStorage.getItem('lastSelectedUser');
+             if(lastUser && data[lastUser]) {
+                 selectUser(lastUser);
+             } else {
+                 document.getElementById("userControl").style.display = "none";
+                 document.getElementById("tableContainer").innerHTML = "";
+                 document.getElementById("summarySection").innerHTML = "";
+                 document.getElementById('previousBalancePaymentsSection').style.display = 'none'; // Hide payments section
+                  const footerDiv = document.getElementById('reportFooter');
+                  if(footerDiv) footerDiv.textContent = '';
+                  document.getElementById('currentMonthDisplay').textContent = '';
+             }
+        }
+
+
+        // Save data to localStorage
+        function saveData() {
+            try {
+                 // Ensure month data structures are correct before saving
+                 for (const userName in data) {
+                      if (Object.prototype.hasOwnProperty.call(data, userName) && data[userName] && typeof data[userName].months === 'object') {
+                          for (const monthKey in data[userName].months) {
+                              if (Object.prototype.hasOwnProperty.call(data[userName].months, monthKey)) {
+                                  const monthEntry = data[userName].months[monthKey];
+                                   // Ensure it's an object with carriedOverBalance, previousBalancePayments array, and days array
+                                  if (monthEntry && typeof monthEntry === 'object' && Array.isArray(monthEntry.days) && Array.isArray(monthEntry.previousBalancePayments)) {
+                                       const [year, monthIndex] = monthKey.split('-').map(Number);
+                                        if (!isNaN(year) && year >= 1900 && !isNaN(monthIndex) && monthIndex >= 1 && monthIndex <= 12) {
+                                            const actualDays = getDaysInMonth(year, monthIndex - 1);
+                                             // Truncate the *days array* within the object
+                                             if (monthEntry.days.length > actualDays) {
+                                                 console.warn(`Truncating days array for ${monthKey} for user ${userName} from ${monthEntry.days.length} to ${actualDays} days before saving.`);
+                                                 monthEntry.days = monthEntry.days.slice(0, actualDays);
+                                             }
+                                             // Ensure carriedOverBalance is saved as a number, default 0 if invalid
+                                             monthEntry.carriedOverBalance = Number(monthEntry.carriedOverBalance) || 0;
+
+                                             // Basic validation for payments array items
+                                              monthEntry.previousBalancePayments.forEach(payment => {
+                                                   if(payment && typeof payment === 'object') {
+                                                        payment.amount = Number(payment.amount) || 0; // Ensure amount is number
+                                                        // date and notes can be kept as strings
+                                                   }
+                                              });
+
+                                        } else {
+                                             console.warn(`Skipping invalid month key format "${monthKey}" during save preparation for user ${userName}.`);
+                                        }
+                                  } else {
+                                        console.warn(`Skipping invalid month entry structure for ${monthKey} during save preparation for user ${userName}.`, monthEntry);
+                                        // Optionally delete the invalid entry: delete data[userName].months[monthKey];
+                                  }
+                              }
+                          }
+                      }
+                 }
+
+                 localStorage.setItem('attendanceData', JSON.stringify(data));
+                 // console.log("Data saved."); // Optional: for debugging
+            } catch (e) {
+                 console.error("Error saving data to localStorage:", e);
+                 // Alert is commented out as it can be annoying on frequent saves
+                 // alert("Problem saving data. Storage might be full.");
+            }
+        }
+
+        function addUser() {
+            const nameInput = document.getElementById("newUserName");
+            const name = nameInput.value.trim();
+            if (!name) {
+                alert("Please enter a name.");
+                return;
+            }
+
+            const existingUserNames = Object.keys(data).map(key => key.toLowerCase());
+            if (existingUserNames.includes(name.toLowerCase())) {
+                 alert(`User '${name}' already exists (case-insensitive match)!`);
+                 nameInput.value = "";
+                 return;
+            }
+
+            const formattedName = name.charAt(0).toUpperCase() + name.slice(1);
+
+            data[formattedName] = {
+                rate: 0,
+                months: {} // Data structure for months, will contain { carriedOverBalance, previousBalancePayments, days } objects
+            };
+            alert(`User '${formattedName}' added successfully!`);
+            saveData();
+            nameInput.value = "";
+            renderUserTabs();
+            selectUser(formattedName);
+        }
+
+        function renderUserTabs() {
+            const tabContainer = document.getElementById("userTabs");
+            tabContainer.innerHTML = '';
+
+            const sortedUserNames = Object.keys(data).sort((a, b) => a.localeCompare(b));
+
+            sortedUserNames.forEach(name => {
+                const btn = document.createElement("button");
+                btn.textContent = name;
+                btn.onclick = () => selectUser(name);
+                 btn.classList.add('user-tab-button');
+                 if(name === currentUser) {
+                     btn.classList.add('active-user-tab');
+                 }
+                 tabContainer.appendChild(btn);
+            });
+        }
+
+        function toggleUsers() {
+            const tabContainer = document.getElementById("userTabs");
+            const button = document.getElementById("hideUsersBtn");
+            if (tabContainer.style.display === "none") {
+                tabContainer.style.display = "flex";
+                 button.textContent = "Hide Names";
+            } else {
+                tabContainer.style.display = "none";
+                 button.textContent = "Show Names";
+            }
+        }
+
+        function selectUser(name) {
+            currentUser = name;
+            localStorage.setItem('lastSelectedUser', name);
+            document.getElementById("selectedUserName").textContent = name;
+            document.getElementById("userControl").style.display = "block";
+            document.getElementById('previousBalancePaymentsSection').style.display = 'block'; // Show payments section when user is selected
+
+            document.querySelectorAll('.user-tab-button').forEach(btn => {
+                 btn.classList.remove('active-user-tab');
+             });
+             const selectedTabBtn = Array.from(document.querySelectorAll('.user-tab-button')).find(btn => btn.textContent === name);
+             if(selectedTabBtn) {
+                 selectedTabBtn.classList.add('active-user-tab');
+             }
+
+            document.getElementById("userRate").value = data[name].rate || 0;
+
+            // Set the viewed month to the current system month
+            currentlyViewedMonth = getCurrentMonth();
+            updateMonthDisplay();
+            renderTable(currentlyViewedMonth); // This will also handle carry-over logic and render payments
+            document.getElementById("summarySection").innerHTML = "";
+             const footerDiv = document.getElementById('reportFooter');
+             if(footerDiv) footerDiv.textContent = '';
+             activeReportType = 'fullMonth'; // Reset active report type when month or user changes
+        }
+
+        document.getElementById("userRate").addEventListener("input", (event) => {
+            if (currentUser && data[currentUser]) {
+                const rateValue = parseFloat(event.target.value);
+                data[currentUser].rate = !isNaN(rateValue) ? rateValue : 0;
+                saveData();
+            }
+        });
+
+
+         // --- Functions for Previous Balance Payments ---
+         function renderPreviousBalancePayments(monthKey) {
+             const paymentListDiv = document.getElementById('paymentList');
+             paymentListDiv.innerHTML = ''; // Clear current list
+
+              if (!currentUser || !monthKey || !data[currentUser] || !data[currentUser].months[monthKey] || !Array.isArray(data[currentUser].months[monthKey].previousBalancePayments)) {
+                   paymentListDiv.innerHTML = '<p>No payments recorded for this month.</p>';
+                   return;
+              }
+
+             const payments = data[currentUser].months[monthKey].previousBalancePayments;
+
+             if (payments.length === 0) {
+                  paymentListDiv.innerHTML = '<p>No payments recorded for this month.</p>';
+                  return;
+             }
+
+             payments.forEach((payment, index) => {
+                 const paymentEntryDiv = document.createElement('div');
+                 paymentEntryDiv.classList.add('payment-entry');
+
+                 const paymentDetails = document.createElement('span');
+                 paymentDetails.classList.add('payment-details');
+
+                  const formattedAmount = (Number(payment.amount) || 0).toFixed(2);
+                  const formattedDate = payment.date ? new Date(payment.date).toLocaleDateString() : 'No Date';
+                  const formattedNotes = payment.notes ? ` (${payment.notes})` : '';
+
+                 paymentDetails.textContent = `Amount: ${formattedAmount}, Date: ${formattedDate}${formattedNotes}`;
+
+                 const deleteButton = document.createElement('button');
+                 deleteButton.classList.add('delete-payment-btn');
+                 deleteButton.textContent = '✕'; // Cross symbol
+                 deleteButton.onclick = () => deletePreviousBalancePayment(monthKey, index); // Pass month and index
+
+                 paymentEntryDiv.appendChild(paymentDetails);
+                 paymentEntryDiv.appendChild(deleteButton);
+                 paymentListDiv.appendChild(paymentEntryDiv);
+             });
+         }
+
+         function addPreviousBalancePayment() {
+             if (!currentUser || !currentlyViewedMonth || !data[currentUser] || !data[currentUser].months[currentlyViewedMonth]) {
+                 alert("Please select a user and month first.");
+                 return;
+             }
+
+             const amountInput = document.getElementById('paymentAmount');
+             const dateInput = document.getElementById('paymentDate');
+             const notesInput = document.getElementById('paymentNotes');
+
+             const amount = parseFloat(amountInput.value);
+             const date = dateInput.value; //YYYY-MM-DD string or empty
+             const notes = notesInput.value.trim();
+
+             if (isNaN(amount) || amount <= 0) {
+                 alert("Please enter a valid positive amount.");
+                 return;
+             }
+
+              // Ensure the previousBalancePayments array exists for the current month
+              const monthData = data[currentUser].months[currentlyViewedMonth];
+              if (!Array.isArray(monthData.previousBalancePayments)) {
+                   monthData.previousBalancePayments = []; // Initialize if missing
+              }
+
+
+             const newPayment = {
+                 amount: amount,
+                 date: date, // Store date asYYYY-MM-DD string
+                 notes: notes
+             };
+
+             monthData.previousBalancePayments.push(newPayment);
+             saveData(); // Save after adding
+             renderPreviousBalancePayments(currentlyViewedMonth); // Re-render list
+             // Clear input fields after adding
+             amountInput.value = '';
+             dateInput.value = '';
+             notesInput.value = '';
+
+             alert("Payment added."); // Optional confirmation
+         }
+
+         function deletePreviousBalancePayment(monthKey, index) {
+              if (!currentUser || !monthKey || !data[currentUser] || !data[currentUser].months[monthKey] || !Array.isArray(data[currentUser].months[monthKey].previousBalancePayments)) {
+                   console.error("Cannot delete payment: invalid data path.");
+                   return;
+              }
+
+             if (index >= 0 && index < data[currentUser].months[monthKey].previousBalancePayments.length) {
+                  if (confirm(`Are you sure you want to delete this payment of ${data[currentUser].months[monthKey].previousBalancePayments[index].amount}?`)) {
+                     data[currentUser].months[monthKey].previousBalancePayments.splice(index, 1); // Remove item by index
+                     saveData(); // Save after deleting
+                     renderPreviousBalancePayments(monthKey); // Re-render list
+                     alert("Payment deleted."); // Optional confirmation
+                  }
+             } else {
+                  console.error("Cannot delete payment: invalid index.", index);
+             }
+         }
+         // --- End Functions for Previous Balance Payments ---
+
+
+        // --- Function to update the displayed month ---
+        function updateMonthDisplay() {
+             const monthDisplay = document.getElementById('currentMonthDisplay');
+             if (monthDisplay && currentlyViewedMonth) {
+                 const [year, monthIndex] = currentlyViewedMonth.split('-').map(Number);
+                 const date = new Date(year, monthIndex - 1, 1);
+                 const monthName = date.toLocaleString('default', { month: 'long' });
+                 monthDisplay.textContent = `${monthName} ${year}`;
+             } else if (monthDisplay) {
+                  monthDisplay.textContent = '';
+             }
+             const nextButton = document.querySelector('#monthNav button:last-child');
+             if(nextButton) {
+                 nextButton.disabled = currentlyViewedMonth === getCurrentMonth();
+             }
+        }
+        // --- End Update Month Display ---
+
+
+        // --- Function to navigate months ---
+        function getRelativeMonthKey(monthKey, offset) {
+             const [year, monthIndex] = monthKey.split('-').map(Number);
+             if (isNaN(year) || year < 1000 || isNaN(monthIndex) || monthIndex < 1 || monthIndex > 12) {
+                  console.error("Invalid month key format:", monthKey);
+                  try {
+                      const d = new Date();
+                       return `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, "0")}`;
+                  } catch (e) {
+                       console.error("Could not determine fallback month key:", e);
+                      return null;
+                  }
+             }
+             const date = new Date(year, monthIndex - 1, 1);
+             date.setMonth(date.getMonth() + offset);
+             return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, "0")}`;
+        }
+
+
+        function goToPreviousMonth() {
+             if (currentUser && currentlyViewedMonth) {
+                 currentlyViewedMonth = getRelativeMonthKey(currentlyViewedMonth, -1);
+                 if (!currentlyViewedMonth) {
+                      console.error("Failed to navigate to previous month.");
+                      currentlyViewedMonth = getCurrentMonth(); // Fallback
+                 }
+
+                 updateMonthDisplay();
+                 renderTable(currentlyViewedMonth); // This will also handle carry-over logic and render payments
+                 document.getElementById("summarySection").innerHTML = "";
+                  const footerDiv = document.getElementById('reportFooter');
+                  if(footerDiv) footerDiv.textContent = '';
+                  activeReportType = 'fullMonth'; // Reset active report type when month changes
+             }
+        }
+
+        function goToNextMonth() {
+             if (currentUser && currentlyViewedMonth) {
+                 const nextMonth = getRelativeMonthKey(currentlyViewedMonth, 1);
+                 if (!nextMonth) {
+                     console.error("Failed to navigate to next month.");
+                     return;
+                 }
+
+                 if (nextMonth > getCurrentMonth()) {
+                      console.log("Cannot go to future month beyond the current calendar month.");
+                     return;
+                 }
+
+                 currentlyViewedMonth = nextMonth;
+                 updateMonthDisplay();
+                 renderTable(currentlyViewedMonth); // This will also handle carry-over logic and render payments
+                 document.getElementById("summarySection").innerHTML = "";
+                  const footerDiv = document.getElementById('reportFooter');
+                  if(footerDiv) footerDiv.textContent = '';
+                  activeReportType = 'fullMonth'; // Reset active report type when month changes
+             }
+        }
+        // --- End Function to navigate months ---
+
+
+         // --- Helper Function to calculate full month totals based ONLY on DAILY entries ---
+         // This calculates the total owed and total received *for a full month's daily entries*
+         // It does NOT include carriedOverBalance or previousBalancePayments for THAT month.
+         // It's used as a building block for the true final balance calculation.
+         function calculateFullMonthTotals(userName, monthKey) {
+              const userData = data[userName];
+              if (!userData || !userData.months[monthKey] || typeof userData.months[monthKey] !== 'object' || !Array.isArray(userData.months[monthKey].days)) {
+                   // console.log(`No or invalid data structure found for ${monthKey} for user ${userName}. Returning default totals.`);
+                   return {
+                        totalPresent: 0,
+                        totalOvertimeHours: 0,
+                        totalRent: 0,
+                        totalFood: 0,
+                        totalDailyReceived: 0,
+                        grossTotal: 0, // Gross from daily entries only
+                        balanceDue: 0 // Balance from daily entries only (Gross - Daily Received)
+                   };
+              }
+
+             const monthDays = userData.months[monthKey].days; // Use the days array
+             const rate = Number(userData.rate) || 0;
+             const overtimeHoursPerDay = 8;
+
+             let totalPresent = 0;
+             let totalOvertimeHours = 0;
+             let totalRent = 0;
+             let totalFood = 0;
+             let totalDailyReceived = 0; // Sum of 'received' from daily entries
+
+             monthDays.forEach(day => {
+                  if (day && typeof day === 'object') {
+                      const status = day.status ? day.status.toUpperCase() : '';
+                      if (status === 'P') totalPresent += 1;
+                      else if (status === 'H') totalPresent += 0.5;
+
+                      totalOvertimeHours += Number(day.overtime) || 0;
+                      totalRent += Number(day.rent) || 0;
+                      totalFood += Number(day.food) || 0;
+                      totalDailyReceived += Number(day.received) || 0; // Sum daily received
+                  }
+             });
+
+             const hazriTotal = totalPresent * rate;
+
+             let overtimeAmount = 0;
+             if (rate > 0 && overtimeHoursPerDay > 0) {
+                  overtimeAmount = (totalOvertimeHours * rate) / overtimeHoursPerDay;
+                  overtimeAmount = parseFloat(overtimeAmount.toFixed(2));
+             }
+
+             const grossTotal = hazriTotal + overtimeAmount + totalRent + totalFood;
+              // Balance due based *only* on the month's own gross and daily received
+             const balanceDue = grossTotal - totalDailyReceived;
+
+
+             return {
+                  totalPresent: totalPresent,
+                  totalOvertimeHours: totalOvertimeHours,
+                  totalRent: totalRent,
+                  totalFood: totalFood,
+                  totalDailyReceived: parseFloat(totalDailyReceived.toFixed(2)), // Round before returning
+                  grossTotal: parseFloat(grossTotal.toFixed(2)),
+                  balanceDue: parseFloat(balanceDue.toFixed(2))
+             };
+         }
+        // --- END Helper Function ---
+
+
+        // --- Modified renderTable to accept monthKey, handle new data structure, and auto-carry-over ---
+        function renderTable(monthKey = currentlyViewedMonth) {
+            const container = document.getElementById("tableContainer");
+            const month = monthKey;
+            const userData = data[currentUser];
+             const paymentsSection = document.getElementById('previousBalancePaymentsSection'); // Get payments section
+
+             if (!userData) {
+                  container.innerHTML = "<p>Please select a user first.</p>";
+                  document.getElementById("summarySection").innerHTML = "";
+                  paymentsSection.style.display = 'none'; // Hide payments section
+                  const footerDiv = document.getElementById('reportFooter');
+                  if(footerDiv) footerDiv.textContent = '';
+                  document.getElementById('currentMonthDisplay').textContent = '';
+                  return;
+             }
+
+            const year = parseInt(month.split('-')[0]);
+            const monthIndex = parseInt(month.split('-')[1]) - 1;
+
+            if (isNaN(year) || year < 1900 || isNaN(monthIndex) || monthIndex < 0 || monthIndex > 11) {
+                console.error(`Invalid month key format: ${month}`);
+                container.innerHTML = `<p>Error: Invalid month data key "${month}".</p>`;
+                 document.getElementById("summarySection").innerHTML = "";
+                 paymentsSection.style.display = 'none'; // Hide payments section
+                 const footerDiv = document.getElementById('reportFooter');
+                 if(footerDiv) footerDiv.textContent = '';
+                 document.getElementById('currentMonthDisplay').textContent = 'Invalid Month';
+                 return;
+            }
+
+            const daysInMonth = getDaysInMonth(year, monthIndex);
+
+             // --- Ensure month data is in the new object structure { carriedOverBalance, previousBalancePayments, days } ---
+             // Initialize month data with new structure if it's missing or invalid
+             if (!userData.months[month] || typeof userData.months[month] !== 'object' || !Array.isArray(userData.months[month].days) || !Array.isArray(userData.months[month].previousBalancePayments) || userData.months[month].days.length !== daysInMonth) {
+
+                 console.log(`Initializing or fixing month structure for ${month} with ${daysInMonth} days for user ${currentUser}.`);
+
+                  // Preserve existing data if possible, default to empty/zero
+                 const existingData = userData.months[month];
+                 const existingCarriedBalance = (existingData && typeof existingData === 'object') ? Number(existingData.carriedOverBalance) || 0 : 0;
+                 const existingPayments = (existingData && typeof existingData === 'object' && Array.isArray(existingData.previousBalancePayments)) ? existingData.previousBalancePayments : [];
+                 const existingDays = (existingData && typeof existingData === 'object' && Array.isArray(existingData.days)) ? existingData.days : [];
+
+
+                 const newMonthDaysArray = Array.from({ length: daysInMonth }, (_, i) => {
+                      const existingDay = (i < existingDays.length && existingDays[i] && typeof existingDays[i] === 'object') ? existingDays[i] : null;
+                      if (existingDay) {
+                           // Ensure all required fields exist for existing days
+                           if (!Object.prototype.hasOwnProperty.call(existingDay, 'date')) existingDay.date = `${i+1}/${monthIndex + 1}/${year}`;
+                           if (!Object.prototype.hasOwnProperty.call(existingDay, 'status')) existingDay.status = '';
+                           if (!Object.prototype.hasOwnProperty.call(existingDay, 'overtime')) existingDay.overtime = 0;
+                           if (!Object.prototype.hasOwnProperty.call(existingDay, 'rent')) existingDay.rent = 0;
+                           if (!Object.prototype.hasOwnProperty.call(existingDay, 'food')) existingDay.food = 0;
+                           if (!Object.prototype.hasOwnProperty.call(existingDay, 'received')) existingDay.received = 0; // Corrected check
+                           if (!Object.prototype.hasOwnProperty.call(existingDay, 'location')) existingDay.location = "";
+                           if (!Object.prototype.hasOwnProperty.call(existingDay, 'notes')) existingDay.notes = "";
+                           if (!Object.prototype.hasOwnProperty.call(existingDay, 'updated')) existingDay.updated = "";
+                         return existingDay;
+                     } else {
+                         const dayIndex = i + 1;
+                         return {
+                             date: `${dayIndex}/${monthIndex + 1}/${year}`,
+                             status: '', overtime: 0, rent: 0, food: 0, received: 0, location: "", notes: "", updated: ""
+                         };
+                     }
+                 });
+
+                  userData.months[month] = {
+                       carriedOverBalance: existingCarriedBalance, // Use preserved or default
+                       previousBalancePayments: existingPayments, // Use preserved or default
+                       days: newMonthDaysArray
+                  };
+                 saveData(); // Save after initializing/fixing structure
+             }
+             // --- End Ensure new data structure ---
+
+
+             // --- Auto Carry-Over Logic on Render (Initial Load/Navigation) ---
+             // This logic initializes or attempts a carry-over ONLY if carriedOverBalance is 0/undefined
+             const previousMonthKeyForRender = getRelativeMonthKey(month, -1);
+
+             // Check if it's not the very first month (previousMonthKeyForRender is valid)
+             // AND the current month's carriedOverBalance is 0 or undefined (Trigger condition)
+             // AND the previous month actually has data structure (to calculate its balance from)
+             if (previousMonthKeyForRender && (userData.months[month].carriedOverBalance === 0 || userData.months[month].carriedOverBalance === undefined) && userData.months[previousMonthKeyForRender] && typeof userData.months[previousMonthKeyForRender] === 'object') {
+
+                  console.log(`Attempting automatic carry over *true final balance* from ${previousMonthKeyForRender} to ${month} on render for user ${currentUser}.`);
+
+                 // Get the previous month's data structure
+                 const prevMonthDataForRender = userData.months[previousMonthKeyForRender];
+
+                 // Check if previous month has days data (needed for daily totals)
+                 if (Array.isArray(prevMonthDataForRender.days) && prevMonthDataForRender.days.length > 0) {
+
+                     // Calculate previous month's totals based *only* on its daily entries (Gross - Daily Received)
+                     const prevMonthDailyTotalsForRender = calculateFullMonthTotals(currentUser, previousMonthKeyForRender);
+
+                     // Get previous month's Carried Over Balance (the one that was carried INTO the previous month)
+                     const prevMonthCarriedOverForRender = Number(prevMonthDataForRender.carriedOverBalance) || 0;
+
+                     // Sum previous month's Payments Received Towards Previous Balance
+                     let prevMonthTotalPrevPaymentsForRender = 0;
+                     if (Array.isArray(prevMonthDataForRender.previousBalancePayments)) {
+                          prevMonthDataForRender.previousBalancePayments.forEach(payment => {
+                               if(payment && typeof payment === 'object') {
+                                   prevMonthTotalPrevPaymentsForRender += Number(payment.amount) || 0;
+                               }
+                          });
+                     }
+
+                     // Calculate the TRUE Final Balance Due for the previous month
+                     const truePrevMonthFinalBalanceForRender = prevMonthDailyTotalsForRender.grossTotal + prevMonthCarriedOverForRender - prevMonthDailyTotalsForRender.totalDailyReceived - prevMonthTotalPrevPaymentsForRender;
+
+                     // Carry over the TRUE Final Balance Due to the current month
+                     if (truePrevMonthFinalBalanceForRender !== 0) { // Only carry over if non-zero
+                         userData.months[month].carriedOverBalance = parseFloat(truePrevMonthFinalBalanceForRender.toFixed(2)); // Store rounded value
+                         console.log(`Successfully automatically carried over TRUE final balance of ${userData.months[month].carriedOverBalance} from ${previousMonthKeyForRender} to ${month} on render.`);
+                         saveData(); // Save after carrying over the balance
+                     } else {
+                          userData.months[month].carriedOverBalance = 0; // Ensure it's 0 if true balance is 0
+                           // saveData(); // Optional: save 0 explicitly if needed, but it's the default anyway
+                          console.log(`Previous month (${previousMonthKeyForRender}) had zero TRUE final balance on render. No balance carried over automatically.`);
+                     }
+
+                 } else {
+                       console.log(`Previous month (${previousMonthKeyForRender}) has no days data on render. Cannot calculate true final balance for automatic carry over.`);
+                       // Ensure carriedOverBalance is 0 for current month
+                        userData.months[month].carriedOverBalance = 0;
+                        // saveData(); // Optional: save 0 explicitly
+                 }
+
+             } else if (!previousMonthKeyForRender) {
+                  console.log(`This is the first month or no previous month key exists. Starting with 0 carried over balance automatically on render.`);
+                  // Ensure carriedOverBalance is 0 for the first month if it somehow wasn't initialized correctly
+                   userData.months[month].carriedOverBalance = 0;
+                   // No need to save if it was already 0 or wasn't the first month
+             } else if (userData.months[month] && userData.months[month].carriedOverBalance !== 0 && userData.months[month].carriedOverBalance !== undefined) {
+                  console.log(`Month ${month} for user ${currentUser} already has a non-zero carried over balance (${userData.months[month].carriedOverBalance}). Skipping automatic carry-over on render.`);
+             } else if (!userData.months[previousMonthKeyForRender] || typeof userData.months[previousMonthKeyForRender] !== 'object' || !Array.isArray(userData.months[previousMonthKeyForRender].days) || userData.months[previousMonthKeyForRender].days.length === 0) {
+                   console.log(`Previous month (${previousMonthKeyForRender}) data structure invalid or empty days array on render. Cannot calculate true final balance for automatic carry over.`);
+                    // Ensure carriedOverBalance is 0 for current month
+                    userData.months[month].carriedOverBalance = 0;
+                    // saveData(); // Optional: save 0 explicitly
+             }
+             // --- End Auto Carry-Over Logic on Render ---
+
+
+            const days = userData.months[month].days; // Get the days array from the new structure
+             const displayedDays = days.slice(0, daysInMonth);
+
+            let html = `
+                <div class="table-responsive"> <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Status</th>
+                        <th>OT</th>
+                        <th>Rent</th>
+                        <th>Food</th>
+                        <th>Received</th>
+                        <th>Notes</th>
+                        <th>Location</th>
+                        <th>Edited</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+
+            displayedDays.forEach((day, i) => {
+                 const currentDay = day && typeof day === 'object' ? day : { date: `${i+1}/${monthIndex + 1}/${year}`, status: '', overtime: 0, rent: 0, food: 0, received: 0, location: "", notes: "", updated: "" };
+
+                // Determine if fields should be disabled based on existing data
+                // Fields are disabled if they have a non-empty string (for text) or a non-zero number
+                const isStatusFilled = currentDay.status && currentDay.status.trim() !== '';
+                const isOvertimeFilled = Number(currentDay.overtime) !== 0;
+                const isRentFilled = Number(currentDay.rent) !== 0;
+                const isFoodFilled = Number(currentDay.food) !== 0;
+                const isReceivedFilled = Number(currentDay.received) !== 0;
+                const isNotesFilled = currentDay.notes && currentDay.notes.trim() !== '';
+                const isLocationFilled = currentDay.location && currentDay.location.trim() !== '';
+
+
+                html += `
+                <tr>
+                    <td>${currentDay.date}</td>
+                    <td><input type="text" data-month="${month}" data-index="${i}" data-field="status" value="${currentDay.status || ''}" ${isStatusFilled ? 'disabled' : ''}></td>
+                    <td><input type="number" data-month="${month}" data-index="${i}" data-field="overtime" value="${currentDay.overtime == 0 ? '' : currentDay.overtime}" ${isOvertimeFilled ? 'disabled' : ''}></td>
+                    <td><input type="number" data-month="${month}" data-index="${i}" data-field="rent" value="${currentDay.rent == 0 ? '' : currentDay.rent}" ${isRentFilled ? 'disabled' : ''}></td>
+                    <td><input type="number" data-month="${month}" data-index="${i}" data-field="food" value="${currentDay.food == 0 ? '' : currentDay.food}" ${isFoodFilled ? 'disabled' : ''}></td>
+                    <td><input type="number" data-month="${month}" data-index="${i}" data-field="received" value="${currentDay.received == 0 ? '' : currentDay.received}" ${isReceivedFilled ? 'disabled' : ''}></td>
+                    <td><input type="text" data-month="${month}" data-index="${i}" data-field="notes" value="${currentDay.notes || ''}" placeholder="Notes" ${isNotesFilled ? 'disabled' : ''}></td>
+                    <td><input type="text" data-month="${month}" data-index="${i}" data-field="location" value="${currentDay.location || ''}" placeholder="Location" ${isLocationFilled ? 'disabled' : ''}></td>
+                    <td id="edited-${month}-${i}">${currentDay.updated || "-"}</td>
+                </tr>`;
+            });
+
+            html += `</tbody>
+                </table>
+                </div> `;
+            container.innerHTML = html;
+
+             addTableEventListeners();
+             renderPreviousBalancePayments(month); // Render the payments list after table
+        }
+        // --- End Modified renderTable ---
+
+
+        function addTableEventListeners() {
+            const table = document.querySelector('#tableContainer table');
+            if (!table) return;
+
+            table.addEventListener('change', (event) => {
+                const target = event.target;
+                if (target.tagName === 'INPUT' && target.dataset.field && target.parentElement.tagName === 'TD') {
+                     // Only process if the input is NOT already disabled
+                     if (target.disabled) {
+                         console.log(`Input for ${target.dataset.field} day ${parseInt(target.dataset.index) + 1} is disabled. Cannot update.`);
+                         // Optionally reset input value to the saved value if user tried to type
+                         const month = target.dataset.month;
+                         const index = parseInt(target.dataset.index);
+                         const field = target.dataset.field;
+                          if (data[currentUser] && data[currentUser].months[month] && data[currentUser].months[month].days[index]) {
+                               const savedValue = data[currentUser].months[month].days[index][field];
+                                if (typeof savedValue === 'number' && savedValue === 0) {
+                                    target.value = ''; // Show empty for 0
+                                } else {
+                                     target.value = savedValue; // Restore saved value
+                                }
+                          }
+                         return;
+                     }
+
+
+                    const month = target.dataset.month;
+                    const index = parseInt(target.dataset.index);
+                    const field = target.dataset.field;
+                    let value;
+
+                    if (field === 'status') {
+                        value = target.value.trim().toUpperCase(); // Convert to uppercase directly
+                         if (value !== 'P' && value !== 'H') { // Only keep 'P' or 'H'
+                             value = '';
+                             target.value = ''; // Clear input visually if not P or H
+                         } // No else needed, value is already uppercase P or H or empty
+                    } else if (['overtime', 'rent', 'food', 'received'].includes(field)) {
+                         const parsedValue = parseFloat(target.value);
+                         value = !isNaN(parsedValue) ? parsedValue : 0;
+                         // Don't clear input visually here immediately. Update function handles showing 0 as empty string.
+                    } else { // notes, location
+                        value = target.value.trim(); // Trim text fields
+                    }
+
+                    // Pass the input element to the update function so it can be disabled
+                    update(month, index, field, value, target);
+                }
+            });
+        }
+
+
+        // Modified update function to receive the input element
+        function update(month, i, field, value, inputElement) {
+             // Ensure data path exists to the specific day within the days array
+            if (!currentUser || !data[currentUser] || !data[currentUser].months[month] || typeof data[currentUser].months[month] !== 'object' || !Array.isArray(data[currentUser].months[month].days) || i < 0 || i >= data[currentUser].months[month].days.length) {
+                console.error(`Error: Invalid data path for update: user=${currentUser}, month=${month}, index=${i}, field=${field}. Or month data structure is invalid.`);
+                 // Restore input value if data path was invalid
+                 if (inputElement) {
+                     const savedValue = data[currentUser]?.months[month]?.days[i]?.[field];
+                     if (typeof savedValue === 'number' && savedValue === 0) {
+                        inputElement.value = ''; // Show empty for 0
+                     } else if (savedValue !== undefined) { // Restore saved value if it exists
+                        inputElement.value = savedValue;
+                     } else { // Default to the value attempted if no saved value found
+                         inputElement.value = (typeof value === 'number' && value === 0) ? '' : value;
+                     }
+                     inputElement.disabled = false; // Ensure it's not disabled if update failed due to invalid path
+                 }
+                return;
+            }
+
+            const day = data[currentUser].months[month].days[i]; // Access day from the 'days' array
+
+            if (Object.prototype.hasOwnProperty.call(day, field)) {
+                 // Check if the new value is different from the current value before updating/disabling/saving
+                 const currentValue = day[field];
+                 let valueChanged = false;
+
+                  if (typeof value === 'number') {
+                       // Compare numbers, handle potential NaN from input
+                       if (Number(value) !== Number(currentValue) || (isNaN(value) && !isNaN(Number(currentValue)))) {
+                            valueChanged = true;
+                       }
+                  } else { // string
+                      if (value.trim() !== (currentValue || '').trim()) { // Compare trimmed strings
+                           valueChanged = true;
+                      }
+                  }
+
+
+                 if (valueChanged) {
+                     day[field] = value; // Save the new value
+
+                      if (['status', 'overtime', 'rent', 'food', 'received', 'location', 'notes'].includes(field)) {
+                           day.updated = new Date().toLocaleString();
+                           const editedCell = document.getElementById(`edited-${month}-${i}`);
+                           if(editedCell) {
+                               editedCell.textContent = day.updated;
+                           }
+
+                           // --- NEW: Disable the input after saving if the saved value is not considered "empty" ---
+                            if (inputElement) {
+                                let disable = false;
+                                if (typeof value === 'number') {
+                                    // Disable if saved value is non-zero number
+                                    if (value !== 0) {
+                                        disable = true;
+                                    }
+                                } else { // text field
+                                     // Disable if saved value is non-empty string after trimming
+                                    if (value.trim() !== '') {
+                                        disable = true;
+                                    }
+                                }
+
+                                if (disable) {
+                                    inputElement.disabled = true;
+                                    // Ensure the displayed value matches the saved value (e.g. 0 displays as empty)
+                                     if (typeof value === 'number' && value === 0) {
+                                         inputElement.value = '';
+                                     } else if (typeof value === 'string') {
+                                          inputElement.value = value.trim();
+                                     } else {
+                                          inputElement.value = value;
+                                     }
+                                } else {
+                                    // If the saved value is empty/zero, ensure input is NOT disabled
+                                     inputElement.disabled = false;
+                                     // Ensure the displayed value matches the saved value (should be empty)
+                                     if (typeof value === 'number') { // Value is 0
+                                         inputElement.value = '';
+                                     } else { // Value is empty string
+                                         inputElement.value = '';
+                                     }
+                                }
+                            }
+                           // --- END NEW ---
+                      }
+
+                      saveData();
+                 } else {
+                     console.log(`Value for ${field} on day ${i + 1} did not change. Not saving or disabling.`);
+                      // Restore the input value to match the current saved value if it didn't change
+                      if (inputElement) {
+                          const savedValue = day[field];
+                           if (typeof savedValue === 'number' && savedValue === 0) {
+                               inputElement.value = ''; // Show empty for 0
+                           } else if (typeof savedValue === 'string') {
+                                inputElement.value = savedValue.trim(); // Restore trimmed saved value
+                           }
+                           else {
+                                inputElement.value = savedValue; // Restore saved value
+                           }
+                           inputElement.disabled = false; // Ensure it's not disabled if value didn't change
+                      }
+                 }
+
+
+            } else {
+                 console.error(`Error: Field "${field}" does not exist on day object for update.`);
+                  // Restore input value if field doesn't exist
+                  if (inputElement) {
+                      if (typeof value === 'number' && value === 0) {
+                         inputElement.value = ''; // Show empty for 0
+                      } else {
+                         inputElement.value = value; // Restore attempted value
+                      }
+                      inputElement.disabled = false; // Ensure it's not disabled if update failed
+                  }
+            }
+        }
+
+
+        // --- showSummary function (uses carriedOverBalance, sums previousBalancePayments) ---
+        function showSummary(calcType) {
+            const summary = document.getElementById("summarySection");
+            if (!currentUser || !data[currentUser] || !currentlyViewedMonth) {
+                summary.innerHTML = "<p>Please select a user and a month first.</p>";
+                 const footerDiv = document.getElementById('reportFooter');
+                 if(footerDiv) footerDiv.textContent = '';
+                 activeReportType = 'fullMonth'; // Reset if no user/month
+                return;
+            }
+
+            const userData = data[currentUser];
+            const currentMonthKey = currentlyViewedMonth;
+            const rate = Number(userData.rate) || 0;
+             const overtimeHoursPerDay = 8;
+
+             // Ensure current month data exists and is in the new object structure
+             const currentMonthData = userData.months[currentMonthKey];
+             if (!currentMonthData || typeof currentMonthData !== 'object' || !Array.isArray(currentMonthData.days) || !Array.isArray(currentMonthData.previousBalancePayments)) {
+                  summary.innerHTML = `<p>No or invalid data structure available for ${currentMonthKey}.</p>`;
+                  const footerDiv = document.getElementById('reportFooter');
+                  if(footerDiv) footerDiv.textContent = '';
+                  activeReportType = 'fullMonth'; // Reset if data is invalid
+                  return;
+             }
+
+            // --- START: Logic to Calculate and Update Carried Over Balance from Previous Month ---
+            // This runs whenever a report is generated, ensuring the carried-over balance is fresh.
+             const previousMonthKeyForCarryOver = getRelativeMonthKey(currentMonthKey, -1);
+
+              // Check if it's not the very first month (previousMonthKeyForCarryOver is valid)
+             // AND the previous month actually has data structure (to calculate its balance from)
+             if (previousMonthKeyForCarryOver && userData.months[previousMonthKeyForCarryOver] && typeof userData.months[previousMonthKeyForCarryOver] === 'object') {
+
+                  console.log(`Recalculating carried over balance for ${currentMonthKey} from previous month (${previousMonthKeyForCarryOver}) before generating report for user ${currentUser}.`);
+
+                 // Get the previous month's data structure for calculation
+                 const prevMonthDataForCalc = userData.months[previousMonthKeyForCarryOver];
+
+                 // Check if previous month has days data (needed for daily totals)
+                 if (Array.isArray(prevMonthDataForCalc.days) && prevMonthDataForCalc.days.length > 0) {
+
+                     // Calculate previous month's totals based *only* on its daily entries (Gross - Daily Received)
+                     const prevMonthDailyTotalsForCalc = calculateFullMonthTotals(currentUser, previousMonthKeyForCarryOver);
+
+                     // Get previous month's Carried Over Balance (the one that was carried INTO the previous month)
+                     const prevMonthCarriedOverForCalc = Number(prevMonthDataForCalc.carriedOverBalance) || 0;
+
+                     // Sum previous month's Payments Received Towards Previous Balance
+                     let prevMonthTotalPrevPaymentsForCalc = 0;
+                     if (Array.isArray(prevMonthDataForCalc.previousBalancePayments)) {
+                          prevMonthDataForCalc.previousBalancePayments.forEach(payment => {
+                               if(payment && typeof payment === 'object') {
+                                   prevMonthTotalPrevPaymentsForCalc += Number(payment.amount) || 0;
+                               }
+                          });
+                     }
+
+                     // Calculate the TRUE Final Balance Due for the previous month
+                     // (Previous Month's Daily Gross) + (Previous Month's Carried-Over INTO IT) - (Previous Month's Daily Received) - (Previous Month's Previous Balance Payments Received)
+                     const truePrevMonthFinalBalanceForCarryOver = prevMonthDailyTotalsForCalc.grossTotal + prevMonthCarriedOverForCalc - prevMonthDailyTotalsForCalc.totalDailyReceived - prevMonthTotalPrevPaymentsForCalc;
+
+                     // Update the current month's carried over balance
+                     const oldCarriedOverBalance = currentMonthData.carriedOverBalance;
+                     const newCarriedOverBalance = parseFloat(truePrevMonthFinalBalanceForCarryOver.toFixed(2));
+
+                      if (oldCarriedOverBalance !== newCarriedOverBalance) {
+                          currentMonthData.carriedOverBalance = newCarriedOverBalance; // Store rounded value
+                          console.log(`Updated carried over balance for ${currentMonthKey} to ${currentMonthData.carriedOverBalance} based on ${previousMonthKeyForCarryOver}'s true final balance.`);
+                          saveData(); // Save after updating the balance
+                      } else {
+                           console.log(`Carried over balance for ${currentMonthKey} (${newCarriedOverBalance}) is already up-to-date based on ${previousMonthKeyForCarryOver}. No save needed.`);
+                      }
+
+
+                 } else {
+                       console.log(`Previous month (${previousMonthKeyForCarryOver}) has no days data. Cannot calculate true final balance for carry over before report.`);
+                        // Ensure carriedOverBalance is 0 for current month if previous data is insufficient
+                        if (currentMonthData.carriedOverBalance !== 0) {
+                             currentMonthData.carriedOverBalance = 0;
+                             saveData(); // Save 0 explicitly
+                        }
+                 }
+
+             } else if (!previousMonthKeyForCarryOver) {
+                  console.log(`This is the first month or no previous month key exists. Ensuring 0 carried over balance for report.`);
+                   // Ensure carriedOverBalance is 0 for the first month if it somehow wasn't initialized correctly
+                   if (currentMonthData.carriedOverBalance !== 0) {
+                       currentMonthData.carriedOverBalance = 0;
+                       saveData(); // Save 0 explicitly
+                   }
+             } else {
+                  console.log(`Previous month (${previousMonthKeyForCarryOver}) data structure invalid. Cannot calculate true final balance for carry over before report.`);
+                   // Ensure carriedOverBalance is 0 for current month if previous data is invalid
+                   if (currentMonthData.carriedOverBalance !== 0) {
+                       currentMonthData.carriedOverBalance = 0;
+                       saveData(); // Save 0 explicitly
+                   }
+             }
+            // --- END: Logic to Calculate and Update Carried Over Balance ---
+
+
+            let daysToReport = [];
+            let summaryTitle = "";
+
+             const currentMonthDaysArray = currentMonthData.days;
+
+             const [year, monthIndex] = currentMonthKey.split('-').map(Number);
+             const totalDaysInCurrentMonth = !isNaN(year) && year >= 1900 && !isNaN(monthIndex) && monthIndex >= 1 && monthIndex <= 12 ? getDaysInMonth(year, monthIndex - 1) : (currentMonthDaysArray.length || 0);
+
+
+            if (calcType === 'fullMonth') {
+                daysToReport = currentMonthDaysArray.slice(0, totalDaysInCurrentMonth);
+                 const dateForTitle = new Date(year, monthIndex - 1, 1);
+                 const monthNameForTitle = dateForTitle.toLocaleString('default', { month: 'long' });
+                summaryTitle = `${totalDaysInCurrentMonth} Days (${monthNameForTitle} ${year}) Report`;
+            } else if (calcType === 'firstHalfCurrent') {
+                daysToReport = currentMonthDaysArray.slice(0, Math.min(15, totalDaysInCurrentMonth));
+                 const dateForTitle = new Date(year, monthIndex - 1, 1);
+                 const monthNameForTitle = dateForTitle.toLocaleString('default', { month: 'long' });
+                summaryTitle = `First ${daysToReport.length} Days of ${monthNameForTitle} ${year} Report`;
+            } else if (calcType === 'afterFifteenth') {
+                daysToReport = currentMonthDaysArray.slice(15, totalDaysInCurrentMonth);
+                 const dateForTitle = new Date(year, monthIndex - 1, 1);
+                 const monthNameForTitle = dateForTitle.toLocaleString('default', { month: 'long' });
+                summaryTitle = `After 15th of ${monthNameForTitle} ${year} Report (${daysToReport.length} Days)`;
+            }
+
+            if (!Array.isArray(daysToReport)) {
+                daysToReport = [];
+                console.warn(`Data slicing for calculation type ${calcType} resulted in non-array data. Using empty array.`);
+            }
+
+            // --- Calculate Totals for the *Current Period's DAILY Entries* ---
+            let currentPeriodTotalPresent = 0;
+            let currentPeriodTotalOvertimeHours = 0;
+            let currentPeriodTotalRent = 0;
+            let currentPeriodTotalFood = 0;
+            let currentPeriodTotalDailyReceived = 0; // Sum of 'received' from daily entries in the period
+
+            daysToReport.forEach(d => {
+                 if (d && typeof d === 'object') {
+                     const status = d.status ? d.status.toUpperCase() : '';
+                     if (status === 'P') currentPeriodTotalPresent += 1;
+                     else if (status === 'H') currentPeriodTotalPresent += 0.5;
+
+                     currentPeriodTotalOvertimeHours += Number(d.overtime) || 0;
+                     currentPeriodTotalRent += Number(d.rent) || 0;
+                     currentPeriodTotalFood += Number(d.food) || 0;
+                     currentPeriodTotalDailyReceived += Number(d.received) || 0;
+                 } else {
+                     console.warn("Skipping invalid day data in current period summary calculation:", d);
+                 }
+            });
+
+             // Calculate Current Period Amounts
+            const currentPeriodHazriTotal = currentPeriodTotalPresent * rate;
+
+            let currentPeriodOvertimeAmount = 0;
+             if (rate > 0 && overtimeHoursPerDay > 0) {
+                 currentPeriodOvertimeAmount = (currentPeriodTotalOvertimeHours * rate) / overtimeHoursPerDay;
+                 currentPeriodOvertimeAmount = parseFloat(currentPeriodOvertimeAmount.toFixed(2));
+            }
+
+            const currentPeriodGrossTotal = currentPeriodHazriTotal + currentPeriodOvertimeAmount + currentPeriodTotalRent + currentPeriodTotalFood;
+            // --- End Current Period DAILY Calculation ---
+
+
+            // --- Get Carried Over Balance and Sum Previous Balance Payments ---
+             // Use the carried over balance which was potentially just updated above
+             const carriedOverBalance = Number(currentMonthData.carriedOverBalance) || 0;
+
+             let totalPreviousBalancePayments = 0;
+             if (Array.isArray(currentMonthData.previousBalancePayments)) {
+                  currentMonthData.previousBalancePayments.forEach(payment => {
+                       if(payment && typeof payment === 'object') { // Basic validation
+                           totalPreviousBalancePayments += Number(payment.amount) || 0;
+                       }
+                  });
+             }
+            // --- End Get Carried Over Balance and Payments ---
+
+
+            // --- Calculate Final Totals including Carried Over Balance and ALL Received Amounts ---
+            const totalAmountOwed = currentPeriodGrossTotal + carriedOverBalance; // Total money owed before considering payments
+
+            // Total Received is the sum of daily received amounts AND payments towards previous balance
+            const totalAllReceived = currentPeriodTotalDailyReceived + totalPreviousBalancePayments;
+
+            const finalBalanceDue = totalAmountOwed - totalAllReceived; // Final remaining balance
+
+
+            // Round final amounts for display
+            const currentPeriodGrossTotalRounded = parseFloat(currentPeriodGrossTotal.toFixed(2));
+             const carriedOverBalanceRounded = parseFloat(carriedOverBalance.toFixed(2));
+             const totalAmountOwedRounded = parseFloat(totalAmountOwed.toFixed(2));
+             const currentPeriodTotalDailyReceivedRounded = parseFloat(currentPeriodTotalDailyReceived.toFixed(2));
+             const totalPreviousBalancePaymentsRounded = parseFloat(totalPreviousBalancePayments.toFixed(2));
+             const totalAllReceivedRounded = parseFloat(totalAllReceived.toFixed(2));
+            const finalBalanceDueRounded = parseFloat(finalBalanceDue.toFixed(2));
+
+
+            summary.innerHTML = `
+                <h3>Report for ${currentUser} - ${summaryTitle}</h3>
+                <p>Attendance: ${currentPeriodTotalPresent} days × ${rate.toFixed(2)} = ${currentPeriodHazriTotal.toFixed(2)}</p>
+                <p>Overtime: ${currentPeriodTotalOvertimeHours} hours → ${currentPeriodOvertimeAmount.toFixed(2)} (${overtimeHoursPerDay} hours equals 1 Attendance Rate)</p>
+                <p>Rent: ${currentPeriodTotalRent.toFixed(2)}</p>
+                <p>Food: ${currentPeriodTotalFood.toFixed(2)}</p>
+                <p>Current Period Gross Total: ${currentPeriodGrossTotalRounded.toFixed(2)}</p>
+                 <p><strong>Carried Over Balance from Previous Month: ${carriedOverBalanceRounded.toFixed(2)}</strong></p>
+                 <p><strong>Total Amount Owed (Gross + Carried Over Balance): ${totalAmountOwedRounded.toFixed(2)}</strong></p>
+                 <hr> <p>Total Received (Daily Entries this Period): ${currentPeriodTotalDailyReceivedRounded.toFixed(2)}</p>
+                 <p>Total Received (Towards Previous Balance): ${totalPreviousBalancePaymentsRounded.toFixed(2)}</p>
+                 <p><strong>Total ALL Received (This Period): ${totalAllReceivedRounded.toFixed(2)}</strong></p>
+                 <hr> <p><strong>Final Balance Due: ${finalBalanceDueRounded.toFixed(2)}</strong></p> `;
+
+            // Clear footer area if summary is generated but not shared yet
+             const footerDiv = document.getElementById('reportFooter');
+             if(footerDiv) footerDiv.textContent = '';
+
+            // Set the active report type after generating summary
+            activeReportType = calcType; // <-- Added setting activeReportType here
+
+        }
+        // --- End showSummary function ---
+
+
+        async function shareReport() {
+            const reportArea = document.getElementById('reportArea');
+            const summaryDiv = document.getElementById('summarySection');
+            const footerDiv = document.getElementById('reportFooter');
+             const paymentsSection = document.getElementById('previousBalancePaymentsSection'); // Get payments section
+            const table = document.querySelector('#tableContainer table'); // Get the table element
+            const tbodyRows = table ? table.querySelectorAll('tbody tr') : []; // Get all rows in tbody
+
+
+            if (!summaryDiv || !summaryDiv.innerText || summaryDiv.innerText.trim() === "" || summaryDiv.innerText.includes("Please select a user")) {
+                alert("Please generate a report first by clicking one of the 'View Report' buttons.");
+                return;
+            }
+            if (!currentUser || !currentlyViewedMonth || !table) { // Check if table exists
+                 alert("Cannot generate report image without a selected user, month, or table data.");
+                 return;
+            }
+
+            // --- Determine which rows to hide based on activeReportType ---
+            let startDay = 1;
+            let endDay = getDaysInMonth(parseInt(currentlyViewedMonth.split('-')[0]), parseInt(currentlyViewedMonth.split('-')[1]) - 1); // Default to full month
+
+            if (activeReportType === 'firstHalfCurrent') {
+                endDay = Math.min(15, endDay); // Ensure endDay doesn't exceed actual days in month
+            } else if (activeReportType === 'afterFifteenth') {
+                startDay = 16;
+            }
+
+            const hiddenRows = []; // Array to store rows that were hidden
+
+            // Only hide if not full month report and rows exist
+            if (activeReportType !== 'fullMonth' && tbodyRows.length > 0) {
+                tbodyRows.forEach(row => {
+                    const dateCell = row.querySelector('td:first-child');
+                    if (dateCell && dateCell.textContent) {
+                         const dateParts = dateCell.textContent.split('/');
+                         const day = parseInt(dateParts[0]);
+
+                         // Hide if the day is outside the range (careful with inclusive/exclusive)
+                         if (!isNaN(day) && (day < startDay || day > endDay)) {
+                              row.style.display = 'none'; // Hide the row
+                              hiddenRows.push(row); // Add to hidden rows list
+                         }
+                    }
+                });
+                 // Add a small delay to allow display changes to render
+                 await new Promise(resolve => setTimeout(resolve, 50));
+            }
+            // --- End Determine which rows to hide ---
+
+
+            // Temporarily hide the payment form and delete buttons during capture
+            const addPaymentForm = document.getElementById('addPaymentForm');
+            const deleteButtons = reportArea.querySelectorAll('.delete-payment-btn');
+            let originalAddPaymentFormDisplay = null;
+            let originalDeleteButtonDisplays = [];
+
+            if (addPaymentForm) {
+                 originalAddPaymentFormDisplay = addPaymentForm.style.display;
+                 addPaymentForm.style.display = 'none';
+            }
+             deleteButtons.forEach(btn => {
+                 originalDeleteButtonDisplays.push(btn.style.display);
+                 btn.style.display = 'none';
+             });
+
+            // Temporarily hide the scrollbar during rendering
+            const tableWrapper = reportArea.querySelector('.table-responsive');
+            let originalOverflowX = null;
+            if(tableWrapper) {
+                originalOverflowX = tableWrapper.style.overflowX;
+                tableWrapper.style.overflowX = 'hidden';
+            }
+
+            // --- Add Footer Text BEFORE capturing ---
+            if (footerDiv) {
+                 const now = new Date();
+                 const formatter = new Intl.DateTimeFormat(navigator.language, {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      second: '2-digit'
+                 });
+                 const formattedDateTime = formatter.format(now);
+
+                 let reportPeriodText = '';
+                 if(activeReportType === 'firstHalfCurrent') reportPeriodText = ' (First 15 Days)';
+                 else if(activeReportType === 'afterFifteenth') reportPeriodText = ' (After 15th)';
+                 else reportPeriodText = ' (Full Month)';
+
+
+                const footerText = `Report for ${currentUser} (${currentlyViewedMonth}${reportPeriodText}) - Generated on ${formattedDateTime}`;
+                footerDiv.textContent = footerText;
+
+                // Increased delay slightly for footer to render
+                 await new Promise(resolve => setTimeout(resolve, 100));
+            }
+            // --- End Add Footer Text ---
+
+             let canvas = null;
+
+            try {
+                canvas = await html2canvas(reportArea, {
+                    scale: 2,
+                    logging: false,
+                    useCORS: true,
+                    backgroundColor: '#ffffff',
+                });
+
+                canvas.toBlob(async function(blob) {
+                    // --- Restore hidden elements and scrollbar AFTER blob is created ---
+                    if (footerDiv) {
+                        footerDiv.textContent = '';
+                    }
+                    if (addPaymentForm && originalAddPaymentFormDisplay !== null) {
+                         addPaymentForm.style.display = originalAddPaymentFormDisplay;
+                    }
+                     deleteButtons.forEach((btn, index) => {
+                         btn.style.display = originalDeleteButtonDisplays[index];
+                     });
+                    if(tableWrapper && originalOverflowX !== null) {
+                        tableWrapper.style.overflowX = originalOverflowX;
+                    }
+
+                    // --- Restore hidden table rows ---
+                    hiddenRows.forEach(row => {
+                        row.style.display = ''; // Show the row again
+                    });
+                    // --- End Restore hidden table rows ---
+
+
+                    if (!blob) {
+                         console.error('Canvas to Blob conversion failed.');
+                         alert('Could not generate report image.');
+                         return;
+                    }
+
+                    const file = new File([blob], `attendance_report_${currentUser}_${currentlyViewedMonth}_${activeReportType}.png`, { type: 'image/png' }); // Added activeReportType to filename
+
+                    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                        try {
+                            await navigator.share({
+                                files: [file],
+                                title: `Attendance Report for ${currentUser} (${currentlyViewedMonth}${activeReportType === 'firstHalfCurrent' ? ' First 15 Days' : activeReportType === 'afterFifteenth' ? ' After 15th' : ' Full Month'})`,
+                                text: `Attendance and expense report image for ${currentUser} for ${currentlyViewedMonth}${activeReportType === 'firstHalfCurrent' ? ' (First 15 Days)' : activeReportType === 'afterFifteenth' ? ' (After 15th)' : ' (Full Month)'}.`
+                            });
+                            console.log('Report image shared successfully!');
+                        } catch (error) {
+                            if (error.name !== 'AbortError') {
+                                 console.error('Web Share failed:', error);
+                                  alert("Sharing failed directly. Report image downloaded instead.");
+                                   downloadBlob(blob, file.name);
+                            } else {
+                                 console.log('Web Share cancelled by user.');
+                            }
+                        }
+                    } else {
+                        console.log('Web Share not supported or cannot share files, initiating download.');
+                         downloadBlob(blob, file.name);
+                         alert("Report image generated. It should be downloaded to your device.");
+                    }
+                }, 'image/png', 0.9);
+
+            } catch (error) {
+                 // Restore hidden elements, scrollbar, and table rows in case of error
+                 if (addPaymentForm && originalAddPaymentFormDisplay !== null) {
+                     addPaymentForm.style.display = originalAddPaymentFormDisplay;
+                 }
+                  deleteButtons.forEach((btn, index) => {
+                      btn.style.display = originalDeleteButtonDisplays[index];
+                  });
+                 if(tableWrapper && originalOverflowX !== null) {
+                     tableWrapper.style.overflowX = originalOverflowX;
+                 }
+                 if (footerDiv) {
+                     footerDiv.textContent = '';
+                 }
+                  hiddenRows.forEach(row => {
+                     row.style.display = ''; // Show the row again
+                 });
+
+                 console.error('Error generating report image with html2canvas:', error);
+                 alert('Could not generate report image.');
+            }
+            // No need for finally here as restore is in then/catch and inside catch itself
+        }
+
+        // Helper function to trigger download
+        function downloadBlob(blob, filename) {
+             const url = URL.createObjectURL(blob);
+             const a = document.createElement('a');
+             a.href = url;
+             a.download = filename;
+             document.body.appendChild(a);
+             a.click();
+             document.body.removeChild(a);
+             URL.revokeObjectURL(url);
+        }
+
+
+        function getCurrentMonth() {
+            const d = new Date();
+            return `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, "0")}`;
+        }
+
+         function getDaysInMonth(year, monthIndex) {
+             return new Date(year, monthIndex + 1, 0).getDate();
+         }
+
+        // Load data on initial page load
+        loadData();
+
+
+         // Optional: Add a function to clear all data (for testing)
+         /*
+         function clearAllData() {
+             if(confirm("Are you sure you want to delete ALL user data? This action cannot be undone.")) {
+                 localStorage.removeItem('attendanceData');
+                 localStorage.removeItem('lastSelectedUser');
+                 data = {};
+                 currentUser = null;
+                 currentlyViewedMonth = null;
+                 renderUserTabs();
+                 document.getElementById("userControl").style.display = "none";
+                 document.getElementById("tableContainer").innerHTML = "";
+                 document.getElementById("summarySection").innerHTML = "";
+                 document.getElementById('previousBalancePaymentsSection').style.display = 'none'; // Hide payments section
+                 const footerDiv = document.getElementById('reportFooter');
+                 if(footerDiv) footerDiv.textContent = '';
+                 document.getElementById("newUserName").value = "";
+                 alert("All data has been cleared.");
+             }
+         }
+         */
+
+    </script>
+
+</body>
+</html>
